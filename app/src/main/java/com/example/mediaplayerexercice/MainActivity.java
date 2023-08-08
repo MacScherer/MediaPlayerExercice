@@ -2,18 +2,18 @@ package com.example.mediaplayerexercice;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.media.Image;
-import android.media.MediaParser;
+import android.content.Context;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
-import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
     private SeekBar seekBarVolume;
     private ImageButton imageButtonPause, imageButtonPlay, imageButtonStop;
     private MediaPlayer mediaPlayer;
+    private AudioManager myAudioManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,8 +23,9 @@ public class MainActivity extends AppCompatActivity {
         imageButtonPause = findViewById(R.id.imageButtonPause);
         imageButtonPlay = findViewById(R.id.imageButtonPlay);
         imageButtonStop = findViewById(R.id.imageButtonStop);
-
-        loadMedia();
+        
+        initializeSeekBar()
+;        loadMedia();
 
         imageButtonPlay.setOnClickListener(v -> {
             playMedia();
@@ -35,6 +36,35 @@ public class MainActivity extends AppCompatActivity {
         });
         imageButtonStop.setOnClickListener(v -> {
             stopMedia();
+        });
+    }
+
+
+    private void initializeSeekBar() {
+        // configure audio manager
+        myAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        //getVolume
+        int maxVolume = myAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int actualVolume = myAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+
+        seekBarVolume.setMax(maxVolume);
+        seekBarVolume.setProgress(actualVolume);
+
+        seekBarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                myAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
         });
     }
 
@@ -53,9 +83,23 @@ public class MainActivity extends AppCompatActivity {
         }
    }
    public void stopMedia(){
-        if (mediaPlayer.isPlaying()){
+        if ((mediaPlayer.isPlaying()) || (!mediaPlayer.isPlaying())){
             mediaPlayer.stop();
             loadMedia();
         }
-   }
+    }
+    @Override
+    protected void onStop() {
+        super.onStop();
+        //    pauseMedia();
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mediaPlayer != null && mediaPlayer.isPlaying()){
+            mediaPlayer.stop();
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+    }
 }
